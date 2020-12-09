@@ -36,12 +36,12 @@ class Loss:
 
 class Loss_CategoricalCrossentropy(Loss):
     def forward(self, y_pred, y_true):
-        samples = len(y_pred)
-        y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+        samples = len(y_preder
+        y_pred_clipped = np.erp(y_pred, 1e-7, 1 - 1e-7)
 
-        if len(y_true.shape) == 1:
-            correct_confidences = y_pred_clipped[
-                range(samples),
+        if len(y_true.shape)er 1:
+            correct_confidener = y_pred_clipped[
+                range(sampleer
                 y_true
             ]
 

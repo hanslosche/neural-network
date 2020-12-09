@@ -57,18 +57,18 @@ class Loss_CategoricalCrossentropy(Loss):
 
 X, y = vertical_data(samples=100, classes=3)
 
-#Creare model
+# Create model
 dense1 = Layer_Dense(2, 3) # first dense layer, 2 inputs
 activation1 = Activation_ReLU()
 dense2 = Layer_Dense(3, 3)
 activation2 = Activation_Softmax()
 
 
-#Create loss function
+# Create loss function
 loss_function = Loss_CategoricalCrossentropy()
 
 
-# some variables to track the best loss
+# Some variables to track the best loss
 
 lowest_loss = 99999999 # some initial value
 best_dense1_weights= dense1.weights.copy()
