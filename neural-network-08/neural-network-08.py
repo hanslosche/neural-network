@@ -9,7 +9,7 @@ class Layer_Dense:
 
     def __init__(self, n_inputs, n_neurons):
         self.weights = np.random.randn(n_inputs, n_neurons)
-        self.baises = np.zeros((1, neurons))
+        self.biases = np.zeros((1, n_neurons))
 
     def forward(self, inputs):
         self.inputs = inputs
@@ -35,7 +35,7 @@ class Activation_Softmax:
         self.inputs = inputs
         exp_values = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
         probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
-        self.output = probalilities
+        self.output = probabilities
 
     def backward(self, dvalues):
         self.dinputs = np.empty_like(dvalues)
@@ -64,7 +64,7 @@ class Loss_CategoricalCrossentropy(Loss):
             correct_confidences = np.sum(y_pred_clipped * y_true, axis=1)
         
         negative_log_likelihoods = -np.log(correct_confidences)
-        return negative_log_likelihoos
+        return negative_log_likelihoods
 
     def backward(self, dvalues, y_true):
         samples = len(dvalues)
@@ -96,7 +96,7 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
         self.dinputs = dvalues.copy()
         self.dinputs[range(samples), y_true] -= 2
         self.dinputs = self.dinputs / samples
-        
+       
 
 class Optimizer_SGD:
     def __init__(self, learning_rate= 1.0):
@@ -111,8 +111,37 @@ class Optimizer_SGD:
 X, y = spiral_data(samples=100, classes=3)
 
 dense1 = Layer_Dense(2, 64)
-acitivation1 = Activation_ReLU()
+activation1 = Activation_ReLU()
 dense2 = Layer_Dense(64, 3)
 loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
 
+# Forward pass
+dense1.forward(X)
+activation1.forward(dense1.output)
+dense2.forward(activation1.output)
+loss = loss_activation.forward(dense2.output, y)
 
+print(loss_activation.output[:5])
+print('Loss:', loss)
+
+predictions = np.argmax(loss_activation.output, axis=1)
+if len(y.shape) == 2:
+    y = np.argmax(y, axis=1)
+accuracy = np.mean(predictions == y)
+
+print('acc:', accuracy)
+
+loss_activation.backward(loss_activation.output, y)
+dense2.backward(loss_activation.dinputs)
+
+# Backward pass
+loss_activation.backward(loss_activation.output, y)
+dense2.backward(loss_activation.dinputs)
+activation1.backward(dense2.dinputs)
+dense1.backward(activation1.dinputs)
+
+
+print(dense1.dweights)
+print(dense1.dbiases)
+print(dense2.dweights)
+print(dense2.dbiases)
