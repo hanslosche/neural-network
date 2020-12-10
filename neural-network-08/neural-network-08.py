@@ -104,7 +104,7 @@ class Optimizer_SGD:
 
     def update_params(self, layer):
         layer.weights += -self.learning_rate * layer.dweights
-        layers.biases += -self.learning_rate * layer.biases
+        layer.biases += -self.learning_rate * layer.biases
 
 
 # Create Dataset
@@ -115,33 +115,33 @@ activation1 = Activation_ReLU()
 dense2 = Layer_Dense(64, 3)
 loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
 
-# Forward pass
-dense1.forward(X)
-activation1.forward(dense1.output)
-dense2.forward(activation1.output)
-loss = loss_activation.forward(dense2.output, y)
+optimizer = Optimizer_SGD()
 
-print(loss_activation.output[:5])
-print('Loss:', loss)
+for epoch in range(10001):
 
-predictions = np.argmax(loss_activation.output, axis=1)
-if len(y.shape) == 2:
-    y = np.argmax(y, axis=1)
-accuracy = np.mean(predictions == y)
+    # Forward pass
+    dense1.forward(X)
+    activation1.forward(dense1.output)
+    dense2.forward(activation1.output)
+    loss = loss_activation.forward(dense2.output, y)
 
-print('acc:', accuracy)
+    predictions = np.argmax(loss_activation.output, axis=1)
+    if len(y.shape) == 2:
+        y = np.argmax(y, axis=1)
+    accuracy = np.mean(predictions == y)
 
-loss_activation.backward(loss_activation.output, y)
-dense2.backward(loss_activation.dinputs)
+    if not epoch % 100:
+        print('epoch: {}, '+ 
+              'acc: {accuracy:.3f},' +
+              'loss: {loss:.3f}')
+    # Backward pass    
+    loss_activation.backward(loss_activation.output, y)
+    dense2.backward(loss_activation.dinputs)
+    activation1.backward(dense2.dinputs)
+    dense1.backward(activation1.dinputs)
 
-# Backward pass
-loss_activation.backward(loss_activation.output, y)
-dense2.backward(loss_activation.dinputs)
-activation1.backward(dense2.dinputs)
-dense1.backward(activation1.dinputs)
+    # Update weights and biases
+    optimizer.update_params(dense1)
+    optimizer.update_params(dense2)
 
 
-print(dense1.dweights)
-print(dense1.dbiases)
-print(dense2.dweights)
-print(dense2.dbiases)
