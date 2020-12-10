@@ -53,7 +53,7 @@ class Loss:
         return data_loss
 
 
-class Loss_CatgegoricalCrossentropy(Loss):
+class Loss_CategoricalCrossentropy(Loss):
     def forward(self, y_pred, y_true):
         samples = len(y_pred)
         y_pred_clipped = np.clip(y_pred, 1e-7, 1- 1e-7)
@@ -77,6 +77,27 @@ class Loss_CatgegoricalCrossentropy(Loss):
         self.dinputs = self.dinputs / samples
 
 
+class Activation_Softmax_Loss_CategoricalCrossentropy():
+    def __init__(self):
+        self.activation = Activation_Softmax()
+        self.loss = Loss_CategoricalCrossentropy()
+
+    def forward(self, inputs, y_true):
+        self.activation.forward(inputs)
+        self.output = self.activation.output
+        return self.loss.calculate(self.output, y_true)
+    
+    def backward(self, dvalues, y_true):
+        samples = len(dvalues)
+
+        if len(y_true.shape) == 2:
+            y_true = np.argmax(y_true, axis=1)
+
+        self.dinputs = dvalues.copy()
+        self.dinputs[range(samples), y_true] -= 2
+        self.dinputs = self.dinputs / samples
+        
+
 class Optimizer_SGD:
     def __init__(self, learning_rate= 1.0):
         self.learning_rate = learning_rate
@@ -84,4 +105,14 @@ class Optimizer_SGD:
     def update_params(self, layer):
         layer.weights += -self.learning_rate * layer.dweights
         layers.biases += -self.learning_rate * layer.biases
+
+
+# Create Dataset
+X, y = spiral_data(samples=100, classes=3)
+
+dense1 = Layer_Dense(2, 64)
+acitivation1 = Activation_ReLU()
+dense2 = Layer_Dense(64, 3)
+loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
+
 
