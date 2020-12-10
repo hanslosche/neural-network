@@ -68,12 +68,12 @@ class Loss_CategoricalCrossentropy(Loss):
 
     def backward(self, dvalues, y_true):
         samples = len(dvalues)
+        labels = len(dvalues[0])
 
-        if len(y_true.shape) == 2:
-            y_true = np.argmax(y_true, axis=1)
+        if len(y_true.shape) == 1:
+            y_true = np.eye(labels)[y_true]
 
-        self.dinputs = dvalues.copy()
-        self.dinputs[range(samples), y_true] -= 1
+        self.dinputs = -y_true / dvalues
         self.dinputs = self.dinputs / samples
 
 
@@ -94,7 +94,7 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
             y_true = np.argmax(y_true, axis=1)
 
         self.dinputs = dvalues.copy()
-        self.dinputs[range(samples), y_true] -= 2
+        self.dinputs[range(samples), y_true] -= 1
         self.dinputs = self.dinputs / samples
        
 
@@ -104,7 +104,7 @@ class Optimizer_SGD:
 
     def update_params(self, layer):
         layer.weights += -self.learning_rate * layer.dweights
-        layer.biases += -self.learning_rate * layer.biases
+        layer.biases += -self.learning_rate * layer.dbiases
 
 
 # Create Dataset
@@ -130,10 +130,11 @@ for epoch in range(10001):
         y = np.argmax(y, axis=1)
     accuracy = np.mean(predictions == y)
 
-    if not epoch % 100:
-        print('epoch: {}, '+ 
-              'acc: {accuracy:.3f},' +
-              'loss: {loss:.3f}')
+    if not epoch % 1000:
+        print(f'epoch: {epoch}, ' +
+        f'acc: {accuracy:.3f}, ' +
+        f'loss: {loss:.3f}')
+
     # Backward pass    
     loss_activation.backward(loss_activation.output, y)
     dense2.backward(loss_activation.dinputs)
