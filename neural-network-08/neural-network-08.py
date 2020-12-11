@@ -99,12 +99,20 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
        
 
 class Optimizer_SGD:
-    def __init__(self, learning_rate= 1.0):
+    def __init__(self, learning_rate=1.0, decay=0.0):
         self.learning_rate = learning_rate
+        self.current_learning_rate = learning_rate
+        self.decay = decay
+        self.iterations = 0
 
+    def pre_update_params(self):
+        if self.decay:
+            self.current_learning_rate = self.learning_rate * ( 1.0 / (1.0 + self.decay * self.iterations))
     def update_params(self, layer):
         layer.weights += -self.learning_rate * layer.dweights
         layer.biases += -self.learning_rate * layer.dbiases
+    def post_update_params(self):
+        self.iterations += 1
 
 
 # Create Dataset
@@ -115,7 +123,7 @@ activation1 = Activation_ReLU()
 dense2 = Layer_Dense(64, 3)
 loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
 
-optimizer = Optimizer_SGD()
+optimizer = Optimizer_SGD(decay=1e-2)
 
 for epoch in range(10001):
 
@@ -130,7 +138,7 @@ for epoch in range(10001):
         y = np.argmax(y, axis=1)
     accuracy = np.mean(predictions == y)
 
-    if not epoch % 1000:
+    if not epoch % 100:
         print(f'epoch: {epoch}, ' +
         f'acc: {accuracy:.3f}, ' +
         f'loss: {loss:.3f}')
@@ -142,7 +150,9 @@ for epoch in range(10001):
     dense1.backward(activation1.dinputs)
 
     # Update weights and biases
+    optimizer.pre_update_params()
     optimizer.update_params(dense1)
     optimizer.update_params(dense2)
+    optimizer.post_update_params()
 
 
